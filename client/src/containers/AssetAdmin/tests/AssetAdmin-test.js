@@ -315,13 +315,13 @@ test('AssetAdmin handleBrowse should not clear selected', async () => {
   expect(deselectFiles.mock.calls.length).toBe(1);
 });
 
-const setupHandleDeleteTest = async () => {
+const setupHandleDeleteTest = async (props = {}, ids = [1]) => {
   render(
-    <AssetAdmin {...makeProps()}/>
+    <AssetAdmin {...makeProps(props)}/>
   );
   resolveBackendGet(makeReadFileResponse());
   const confirmation = await screen.findByTestId('test-bulk-delete-confirmation');
-  nextParams = [[1]];
+  nextParams = [ids];
   fireEvent.click(confirmation);
 };
 
@@ -330,6 +330,24 @@ test('AssetAdmin handleDelete should delete a file', async () => {
   resolveBackendPost();
   expect(lastBackendPostEndpoint).toBe('test/endpoint/delete');
   expect(lastBackendPostData).toEqual({ ids: [1] });
+});
+
+test('AssetAdmin handleDelete deletes a confirmed editor file outside the gallery page', async () => {
+  await setupHandleDeleteTest({
+    fileId: 2736,
+    confirmedDeletionFiles: [{ id: 2736, title: 'Staff portrait' }],
+  }, ['2736']);
+  expect(lastBackendPostEndpoint).toBe('test/endpoint/delete');
+  expect(lastBackendPostData).toEqual({ ids: [2736] });
+  resolveBackendPost();
+});
+
+test('AssetAdmin handleDelete supports confirmed files from multiple gallery pages', async () => {
+  await setupHandleDeleteTest({
+    confirmedDeletionFiles: [{ id: 1 }, { id: 2736 }],
+  }, [1, 2736]);
+  expect(lastBackendPostData).toEqual({ ids: [1, 2736] });
+  resolveBackendPost();
 });
 
 test('AssetAdmin handleDelete reject known error', async () => {

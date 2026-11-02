@@ -44,6 +44,7 @@ const AssetAdmin = ({
   onSubmitEditor,
   type = 'admin',
   queuedFiles,
+  confirmedDeletionFiles = [],
   actions,
   maxFiles = null,
   fileSelected,
@@ -303,7 +304,9 @@ const AssetAdmin = ({
   const handleDelete = (ids) => {
     actions.confirmDeletion.deleting();
     const filesToDelete = ids.map(id => {
-      const result = findFile(id);
+      // An UploadField can open an editor for a file outside the current gallery page.
+      const result = findFile(id)
+        || confirmedDeletionFiles.find((file) => file.id === parseInt(id, 10));
       if (!result) {
         throw new Error(`File selected for deletion cannot be found: ${id}`);
       }
@@ -748,6 +751,7 @@ AssetAdmin.propTypes = {
   queuedFiles: PropTypes.shape({
     items: PropTypes.array.isRequired,
   }),
+  confirmedDeletionFiles: PropTypes.array,
   filesTotalCount: PropTypes.number,
   loading: PropTypes.bool,
   actions: PropTypes.object,
@@ -768,6 +772,7 @@ function mapStateToProps(state, ownProps) {
   return {
     securityId: state.config.SecurityID,
     queuedFiles: state.assetAdmin.queuedFiles,
+    confirmedDeletionFiles: state.assetAdmin.confirmDeletion.files,
     showSearch: state.assetAdmin.displaySearch.isOpen,
     type: (formSchema && formSchema.type) || ownProps.type,
   };
